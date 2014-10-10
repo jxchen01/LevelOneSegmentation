@@ -7,7 +7,8 @@ idxBase=100;
 imgType='.png';
 
 %%%% program parameters %%%%
-trainingFrame=1;
+%trainingFrame=1;
+trainingFrame=[1,85];
 opt_frangi=struct('FrangiScaleRange', [1 2], ...
     'FrangiScaleRatio', 1, 'FrangiBetaOne', 0.5, ...
     'FrangiBetaTwo', 5, 'verbose',false,...
