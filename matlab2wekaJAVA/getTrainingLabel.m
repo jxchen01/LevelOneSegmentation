@@ -2,17 +2,16 @@ function [labelIdx, labelMat]=getTrainingLabel(info)
 
 sqNum=info.sqNum;
 idxBase=info.idxBase;
-imgType=info.imgType;
 trainingFrame=info.trainingFrame;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% load training labels %%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
-str=['../sq',num2str(sqNum),'/mask/img0',num2str(idxBase+trainingFrame),'_background',imgType];
+str=['../sq',num2str(sqNum),'/mask/img0',num2str(idxBase+trainingFrame),'_background.png'];
 bg=imread(str);
 bg=(bg>1e-8);
 
-str=['../sq',num2str(sqNum),'/mask/img0',num2str(idxBase+trainingFrame),'_cell',imgType];
+str=['../sq',num2str(sqNum),'/mask/img0',num2str(idxBase+trainingFrame),'_cell.png'];
 cl=imread(str);
 cl=(cl>1e-8);
 
