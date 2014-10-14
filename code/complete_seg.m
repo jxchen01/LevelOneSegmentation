@@ -4,8 +4,8 @@
 % opt=setParameter();
 % 
 % %%%%%%%  model training %%%%%%%%%%
-% [myModel, numPixel] = training(opt);
-% disp('finish training');
+ [myModel, numPixel] = training(opt);
+ disp('finish training');
 %%%%%%%%%%%%%%%%%%%%%%%%%
 img=cell(1,opt.numFrame);
 for i=1:1:opt.numFrame
