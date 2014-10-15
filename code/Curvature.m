@@ -22,59 +22,11 @@ for i=appLength:1:(ctlLength-appLength+1)
 %         (hypot(dx(i),dy(i)))^3;
     xp0=ctlList(i,1); yp0=ctlList(i,2);
     
-    ft = fittype(['a*(x-' num2str(xp0) ')+',num2str(yp0)],...
-    'dependent','y','independent','x','coefficients',{'a'});
-
-    pl= ctlList(i-appLength+1:1:(i-1), :);
-    cf = fit(pl(:,1), pl(:,2),ft);
-    a=confint(cf);
-    if(a(2)-a(1)>1)
-        fty = fittype(['a*(x-' num2str(yp0) ')+',num2str(xp0)],...
-        'dependent','y','independent','x','coefficients',{'a'});
-        cfy = fit(pl(:,2), pl(:,1),fty);
-        b=confint(cfy);
-        if((b(2)-b(1)) < (a(2)-a(1)))
-            ori1=atan(1/coeffvalues(cfy));
-        else
-            ori1=atan(coeffvalues(cf));
-        end
-    else
-        ori1=atan(coeffvalues(cf));
-    end
-    
-%     polypara= polyfit(pl(:,1),pl(:,2), 1);
-%     if(isnan(polypara(1)))
-%         ori1=pi/2;
-%     else
-%         ori1=atan(polypara(1));
-%     end
+    ori1=OrientFit(ctlList(i-appLength+1:1:(i-1),:), xp0, yp0);
     xp1=ctlList(i-appLength+1,1); 
     yp1=ctlList(i-appLength+1,2);
     
-    
-    pl= ctlList((i+1):1:i+appLength-1, :);
-    cf = fit(pl(:,1), pl(:,2),ft);
-    a=confint(cf);
-    if(a(2)-a(1)>1)
-        fty = fittype(['a*(x-' num2str(yp0) ')+',num2str(xp0)],...
-        'dependent','y','independent','x','coefficients',{'a'});
-        cfy = fit(pl(:,2), pl(:,1),fty);
-        b=confint(cfy);
-        if((b(2)-b(1)) < (a(2)-a(1)))
-            ori2=atan(1/coeffvalues(cfy));
-        else
-            ori2=atan(coeffvalues(cf));
-        end
-    else
-        ori2=atan(coeffvalues(cf));
-    end
-    
-%     polypara = polyfit(pl(:,1),pl(:,2), 1);
-%     if(isnan(polypara(1)))
-%         ori2=pi/2;
-%     else
-%         ori2=atan(polypara(1));
-%     end
+    ori2=OrientFit(ctlList((i+1):1:i+appLength-1, :), xp0,yp0);
     xp2=ctlList(i+appLength-1,1); 
     yp2=ctlList(i+appLength-1,2);
     

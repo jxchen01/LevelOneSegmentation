@@ -55,16 +55,10 @@ for j=1:1:numPixelBP
                     keyboard
                 end
                 
-                ft = fittype(['a*(x-' num2str(tx) ')+'...
-                    num2str(ty)],'dependent','y','independent',...
-                    'x','coefficients',{'a'});
-                
                 if(branchLength1>6)
-                    cf = fit(pixelList1(1:6,1), pixelList1(1:6,2),ft);
-                    ori1=atan(coeffvalues(cf));
+                    ori1=OrientFit(pixelList1(1:6,:),tx,ty);
                 elseif(branchLength1>1)
-                    cf = fit(pixelList1(:,1), pixelList1(:,2),ft);
-                    ori1=atan(coeffvalues(cf));
+                    ori1=OrientFit(pixelList1,tx,ty);
                 else % length =1
                     ori1=atan((pixelList1(end,2)-ty)/(pixelList1(end,1)-tx));
                 end
@@ -75,17 +69,11 @@ for j=1:1:numPixelBP
                 numBranch = numBranch +1;
                 branchLength2 = branchLength - branchLength1 ;
                 pixelList2 = pixelList(end:-1:branchLength1+1,1:2);
-                
-                ft = fittype(['a*(x-' num2str(px) ')+'...
-                    num2str(py)],'dependent','y','independent',...
-                    'x','coefficients',{'a'});
-                
+
                 if(branchLength2>6)
-                    cf = fit(pixelList2(1:6,1), pixelList2(1:6,2),ft);
-                    ori2=atan(coeffvalues(cf));
+                    ori2=OrientFit(pixelList2(1:6,:),px,py);
                 elseif(branchLength2>1)
-                    cf = fit(pixelList2(:,1), pixelList2(:,2),ft);
-                    ori2=atan(coeffvalues(cf));
+                    ori2=OrientFit(pixelList2,px,py);
                 else % length =1
                     ori2=atan((pixelList(end-1,2)-...
                         pixelList(end,2))/(pixelList(end-1,1)-pixelList(end,2)));
@@ -95,21 +83,11 @@ for j=1:1:numPixelBP
                     pixelList2,'branchLength',branchLength2,'orientation',ori2);
                 continue;
             end
-            
-            ft = fittype(['a*(x-' num2str(tx) ')+'...
-                 num2str(ty)],'dependent','y','independent',...
-                 'x','coefficients',{'a'});
 
             if(branchLength>6)
-                cf = fit(pixelList(1:6,1), pixelList(1:6,2),ft);
-                ori=atan(coeffvalues(cf));
-                %polypara = polyfit(pixelList(1:6,1) , pixelList(1:6,2), 1);
-                %ori=atan(polypara(1));
+                ori=OrientFit(pixelList(1:6,:),tx,ty);
             elseif(branchLength>1)
-                cf = fit(pixelList(:,1), pixelList(:,2),ft);
-                ori=atan(coeffvalues(cf));
-                %polypara = polyfit(pixelList(:,1) , pixelList(:,2), 1);
-                %ori=atan(polypara(1));
+                ori=OrientFit(pixelList,tx,ty);
             else % length =1
                 ori=atan((py-ty)/(px-tx));
             end
