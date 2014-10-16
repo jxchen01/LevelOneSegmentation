@@ -297,6 +297,8 @@ Rs=imfill(R,'holes');
 opt_ctl=bwmorph(Rs,'thin',Inf);
 opt_ctlList = find(opt_ctl>0);
 
+warning(ws)
+
 end
 
 function R=d2Refion(R)
@@ -346,5 +348,3 @@ function [pList, numPixel]=extractInnerBoundaryList(innerBoundary,dimx,dimy)
         keyboard;
     end
 end
-
-warning(ws)
