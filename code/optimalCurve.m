@@ -7,7 +7,7 @@ colLength = 10;
 se_dil = strel('disk',8);
 se_1 = strel('disk',1,0);
 se_2 = strel('disk',2,0);
-%se_sq_3 = strel('square',3);
+se_sq_5 = strel('square',5);
 [dimx,dimy]=size(Iv);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,6 +24,7 @@ outer_region = imerode(bounding,se_1);
 %%%%%%%%%%%%%%%%%%%%%%%%
 inner_d2 = imdilate(ctl,se_2);
 inner_d2(~outer_region)=false;
+inner_d2=d2Refion(inner_d2);
 inner_d1 = imerode(inner_d2,se_1);
 inner_bd = inner_d2 - inner_d1;
 inner_bd = bwmorph(inner_bd,'thin',1);
@@ -33,8 +34,9 @@ inner_bd = bwmorph(inner_bd,'thin',1);
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%% identify region around two ends %%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-ep = bwmorph(ctl,'endpoint');
-ep_region = imdilate(ep,se_2);
+new_ctl = bwmorph(inner_d2,'skel',Inf);
+ep = bwmorph(new_ctl,'endpoint');
+ep_region = imdilate(ep,se_sq_5);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%
@@ -283,11 +285,12 @@ opt_ctlList = find(opt_ctl>0);
 
 end
 
-function innerBoundary = pruneInnerBoundary(innerBoundary)
-    tmp=[0,-1,0; 1, 0, 1; 0, -1, 0];
-    resp=conv2(double(innerBoundary),tmp,'same');
-    resp(~innerBoundary)=3;
-    innerBoundary(resp==0)=0;
+function R=d2Refion(R)
+%%% remove small spur/bump on boundary %%%
+nbrKernel=[0,1,0;1,0,1;0,1,0];
+resp=conv2(single(R),single(nbrKernel),'same');
+resp(~R)=0;
+R(resp<2)=0;
 end
 
 function [pList, numPixel]=extractInnerBoundaryList(innerBoundary,dimx,dimy)
