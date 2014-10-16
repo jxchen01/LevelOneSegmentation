@@ -10,6 +10,8 @@ se_2 = strel('disk',2,0);
 se_sq_5 = strel('square',5);
 [dimx,dimy]=size(Iv);
 
+ws = warning('off','all');  % Turn off warning
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% get outer boundary %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%
@@ -25,11 +27,19 @@ outer_region = imerode(bounding,se_1);
 inner_d2 = imdilate(ctl,se_2);
 inner_d2(~outer_region)=false;
 inner_d2=d2Refion(inner_d2);
-inner_d1 = imerode(inner_d2,se_1);
-inner_bd = inner_d2 - inner_d1;
-inner_bd = bwmorph(inner_bd,'thin',1);
+B=bwboundaries(inner_d2,'noholes');
+if(length(B)>1)
+    disp('more than two objects detected');
+    keyboard
+end
+tmp=B{1};
+colWidth = size(tmp,1)-1;
+inner_list(:,:) = tmp(1:end-1,:);
+%inner_d1 = imerode(inner_d2,se_1);
+%inner_bd = inner_d2 - inner_d1;
+%inner_bd = bwmorph(inner_bd,'thin',1);
 %inner_bd = pruneInnerBoundary(inner_med);
-[inner_list, colWidth] = extractInnerBoundaryList(inner_bd,dimx,dimy);
+%[inner_list, colWidth] = extractInnerBoundaryList(inner_bd,dimx,dimy);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%% identify region around two ends %%%%%%
@@ -90,16 +100,20 @@ for i=1:1:colWidth
     for j=1:1:colLength
         px=round(tx+dx*j);
         py=round(ty+dy*j);
-        if(px>0 && px<=dimx && py>0 && py<=dimy && inner_d1(px,py) && inner_d2(px,py))
-            shootDirection=-1;
-            break;
+        if(px~=tx || py~=ty)
+            if(px>0 && px<=dimx && py>0 && py<=dimy && inner_d2(px,py))
+                shootDirection=-1;
+                break;
+            end
         end
         
         px=round(tx-dx*j);
         py=round(ty-dy*j);
-        if(px>0 && px<=dimx && py>0 && py<=dimy && inner_d1(px,py) && inner_d2(px,py))
-            shootDirection=1;
-            break;
+        if(px~=tx||py~=ty)
+            if(px>0 && px<=dimx && py>0 && py<=dimy && inner_d2(px,py))
+                shootDirection=1;
+                break;
+            end
         end
     end
     if(shootDirection==0)
@@ -333,3 +347,4 @@ function [pList, numPixel]=extractInnerBoundaryList(innerBoundary,dimx,dimy)
     end
 end
 
+warning(ws)

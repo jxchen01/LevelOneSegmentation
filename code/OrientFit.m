@@ -1,5 +1,7 @@
 function ori=OrientFit(pl,px,py)
 
+ws = warning('off','all');  % Turn off warning
+
 ft = fittype(['a*(x-' num2str(px) ')+',num2str(py)],...
     'dependent','y','independent','x','coefficients',{'a'});
 
@@ -20,3 +22,5 @@ if(a(2)-a(1)>1)
 else
     ori=atan(coeffvalues(cf));
 end
+
+warning(ws)
