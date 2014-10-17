@@ -1,49 +1,175 @@
-function opt_ctlList=optimalCut(ctlList, ctl, rg, Grad, Iv)
+function opt_ctlList=optimalCut(ctl, rg, Grad, Iv)
 
 smoothness=2;
 minJump=10;
 colLength = 10;
+maxSearchAhead = 20;
 [dimx,dimy]=size(Iv);
-
-%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%% get outer boundary %%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%
-se_dil = strel('disk',8);
-se_1 = strel('disk',1);
-dilatedCell = imdilate(ctl,se_dil);
-bounding = dilatedCell & rg;
-outer_med = imdilate(bounding, se_1) - bounding;
-outer_med = bwmorph(outer_med,'thin',1);
-outerList = sortPixels(outer_med, dimx, dimy);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% get inner boundary %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-[inX,inY] = ind2sub([dimx,dimy], ctlList(2:1:(end-1)));
-innerList=cat(2,inX, inY);
+BC=bwboundaries(ctl,'noholes');
+tmp=BC{1};
+innerList(:,:) = tmp(1:end-1,:);
+%innerList = SortCellPixel(ctl);
+%[inX,inY] = ind2sub([dimx,dimy], ctlList(2:1:(end-1)));
+%innerList=cat(2,inX, inY);
+clear tmp BC
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% get outer boundary %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+se_dil = strel('disk',8);
+%se_1 = strel('disk',1);
+dilatedCell = imdilate(ctl,se_dil);
+bounding = dilatedCell & rg;
 
+%outer_med = imdilate(bounding, se_1) - bounding;
+%outer_med = bwmorph(outer_med,'thin',1);
+%outer_ep = bwmorph(outer_med,'endpoint');
+
+B = bwboundaries(bounding,'noholes');
+if(numel(B)~=1)
+    disp('error in identifying bounderies');
+    keyboard;
+end
+tmp=B{1};
+outerList(:,:)=tmp(1:end-1, :);
+clear tmp B
+%outerList = sortPixels(outer_med, dimx, dimy);
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% build column graph %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-colWidth = size(outerList,1);
-GV=zeros(colLength,colWidth);
-GVtoRaw=cell(colLength,colWidth);
-for i=1:1:colWidth
+outer_length = size(outerList,1);
+inner_length = size(innerList,1);
+GVT=zeros(colLength,outer_length*2); % pre-assign a large size (2*length)
+GVtoRaw=cell(colLength,outer_length);
+colWidth = 0;
+for i=1:2:outer_length
     tx=outerList(i,1); ty=outerList(i,2);
-    idx=knnsearch(innerList,[tx ty]);
-    px=innerList(idx,1); py=innerList(idx,2);
-    
-    dx=(tx-px)/(colLength-1);
-    dy=(ty-py)/(colLength-1);
-    GV(1,i)=Grad(px,py)*Iv(px,py);
-    GVtoRaw{1,i}=[px,py];
-    for j=1:1:colLength-1
-        sx=round(px+dx*j);
-        sy=round(py+dy*j);
-        GV(j+1,i)=Grad(sx,sy)*Iv(px,py);
-        GVtoRaw{j+1,i}=[sx,sy];
+    if(i==1)
+        idx=knnsearch(innerList,[tx ty]);
+        px=innerList(idx,1); py=innerList(idx,2);
+        pre_idx = idx;
+        
+        colWidth = colWidth+1;
+        dx=(tx-px)/(colLength-1);
+        dy=(ty-py)/(colLength-1);
+        GVT(1,colWidth)=Grad(px,py)*Iv(px,py);
+        GVtoRaw{1,colWidth}=[px,py];
+        for j=1:1:colLength-1
+            sx=round(px+dx*j);
+            sy=round(py+dy*j);
+            GVT(j+1,colWidth)=Grad(sx,sy)*Iv(px,py);
+            GVtoRaw{j+1,colWidth}=[sx,sy];
+        end
+    else
+        if(pre_idx>inner_length-maxSearchAhead+1)
+            sub_idx = cat(2,pre_idx:1:inner_length, 1:1:pre_idx-inner_length+maxSearchAhead-1);
+        else
+            sub_idx = pre_idx:1:pre_idx+maxSearchAhead-1;
+        end
+        
+        opt_sub=knnsearch(innerList(sub_idx,:),[tx,ty]);
+        opt_idx = sub_idx(opt_sub);
+        
+        if(opt_idx>pre_idx+4)
+            for kk=pre_idx+1:2:opt_idx
+                px=innerList(kk,1); py=innerList(kk,2);
+                colWidth = colWidth+1;
+                dx=(tx-px)/(colLength-1);
+                dy=(ty-py)/(colLength-1);
+                GVT(1,colWidth)=Grad(px,py)*Iv(px,py);
+                GVtoRaw{1,colWidth}=[px,py];
+                for j=1:1:colLength-1
+                    sx=round(px+dx*j);
+                    sy=round(py+dy*j);
+                    GVT(j+1,colWidth)=Grad(sx,sy)*Iv(px,py);
+                    GVtoRaw{j+1,colWidth}=[sx,sy];
+                end
+            end
+        elseif((opt_idx<pre_idx && opt_idx+ inner_length > pre_idx+4 ))
+            for kk=pre_idx+1:2:inner_length
+                px=innerList(kk,1); py=innerList(kk,2);
+                colWidth = colWidth+1;
+                dx=(tx-px)/(colLength-1);
+                dy=(ty-py)/(colLength-1);
+                GVT(1,colWidth)=Grad(px,py)*Iv(px,py);
+                GVtoRaw{1,colWidth}=[px,py];
+                for j=1:1:colLength-1
+                    sx=round(px+dx*j);
+                    sy=round(py+dy*j);
+                    GVT(j+1,colWidth)=Grad(sx,sy)*Iv(px,py);
+                    GVtoRaw{j+1,colWidth}=[sx,sy];
+                end
+            end
+            for kk=1:2:opt_idx
+                px=innerList(kk,1); py=innerList(kk,2);
+                colWidth = colWidth+1;
+                dx=(tx-px)/(colLength-1);
+                dy=(ty-py)/(colLength-1);
+                GVT(1,colWidth)=Grad(px,py)*Iv(px,py);
+                GVtoRaw{1,colWidth}=[px,py];
+                for j=1:1:colLength-1
+                    sx=round(px+dx*j);
+                    sy=round(py+dy*j);
+                    GVT(j+1,colWidth)=Grad(sx,sy)*Iv(px,py);
+                    GVtoRaw{j+1,colWidth}=[sx,sy];
+                end
+            end
+        else
+            px=innerList(opt_idx,1); py=innerList(opt_idx,2);
+            colWidth = colWidth+1;
+            dx=(tx-px)/(colLength-1);
+            dy=(ty-py)/(colLength-1);
+            GVT(1,colWidth)=Grad(px,py)*Iv(px,py);
+            GVtoRaw{1,colWidth}=[px,py];
+            for j=1:1:colLength-1
+                sx=round(px+dx*j);
+                sy=round(py+dy*j);
+                GVT(j+1,colWidth)=Grad(sx,sy)*Iv(px,py);
+                GVtoRaw{j+1,colWidth}=[sx,sy];
+            end
+        end
+        
+        pre_idx = opt_idx;
+            
     end
 end
+
+GV(:,:)=GVT(:,1:1:colWidth);
+
+% colWidth = size(outerList,1);
+% GV=zeros(colLength,colWidth);
+% GVtoRaw=cell(colLength,colWidth);
+% for i=1:1:colWidth
+%     tx=outerList(i,1); ty=outerList(i,2);
+%     if(i==1)
+%         idx=knnsearch(innerList,[tx ty]);
+%         px=innerList(idx,1); py=innerList(idx,2);
+%         pre_idx = idx;
+%     else
+%         if(pre_idx>colWidth-maxSearchAhead+1)
+%             sub_idx = cat(2,pre_idx:1:colWidth, 1:1:pre_idx-colWidth+maxSearchAhead-1);
+%         else
+%             sub_idx = pre_idx:1:pre_idx+maxSearchAhead-1;
+%         end
+%         opt_sub=knnsearch(innerList(sub_idx,:),[tx,ty]);
+%         opt_idx = sub_idx(opt_sub);
+%         
+%     end
+%     
+%     dx=(tx-px)/(colLength-1);
+%     dy=(ty-py)/(colLength-1);
+%     GV(1,i)=Grad(px,py)*Iv(px,py);
+%     GVtoRaw{1,i}=[px,py];
+%     for j=1:1:colLength-1
+%         sx=round(px+dx*j);
+%         sy=round(py+dy*j);
+%         GV(j+1,i)=Grad(sx,sy)*Iv(px,py);
+%         GVtoRaw{j+1,i}=[sx,sy];
+%     end
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% convert GV to an edge-weighted graph %%%
@@ -128,7 +254,7 @@ end
 
 GE= sparse(GE_init(:,1), GE_init(:,2), GE_init(:,3), numNode, numNode);
 
-[dist, path, ~] = graphshortestpath(GE, ...
+[~, path, ~] = graphshortestpath(GE, ...
     numNode-1, numNode, 'Method','Acyclic');
 
 %disp(dist)
@@ -205,7 +331,16 @@ end
 %%%%%%% extract the centerline %%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
 Rs=imfill(R,'holes');
+
+idx=find(R>0);
+[tx,ty]=ind2sub([dimx,dimy],idx);
+for i=1:1:length(idx)
+    ss= Rs(tx(i),ty(i)+1)+ Rs(tx(i),ty(i)-1) + Rs(tx(i)+1,ty(i)) + Rs(tx(i)-1,ty(i));
+    if(ss<2)
+        Rs(tx(i),ty(i))=0;
+    end
+end
+
 opt_ctl=bwmorph(Rs,'thin',Inf);
 opt_ctlList = find(opt_ctl>0);
-
 

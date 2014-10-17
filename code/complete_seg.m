@@ -1,14 +1,14 @@
 % addpath('../matlab2wekaJAVA/');
 % %javaaddpath('/Applications/weka-3-6-9.app/Contents/Resources/Java/weka.jar')
 % javaaddpath('E:/Weka/weka.jar');
-% opt=setParameter();
+% opt=setParameter_local();
 % 
 % %%%%%%%  model training %%%%%%%%%%
 % [myModel, numPixel] = training(opt);
  %disp('finish training');
 %%%%%%%%%%%%%%%%%%%%%%%%%
 img=cell(1,opt.numFrame);
-for i=1:1:opt.numFrame
+for i=30:1:opt.numFrame
     disp(['frame: ',num2str(i)]);
     str=['../sq',num2str(opt.sqNum),'/raw/img0',...
         num2str(opt.idxBase+i),opt.imgType];

@@ -48,7 +48,8 @@ for i=1:1:cc.NumObjects
     if(len>opt.maxLength)
         rg=ismember(labVoro,i);
         cg=ismember(labCell,i);
-        snew=optimalCurve(cg, rg, Grad, Iv);
+        snew=optimalCut(cg, rg, Grad, Iv);
+        %snew=optimalCurve(cg, rg, Grad, Iv);
         R(snew)=1;
     else
         R(ss)=1;
