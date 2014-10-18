@@ -7,16 +7,6 @@ maxSearchAhead = 20;
 [dimx,dimy]=size(Iv);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
-%%%%% get inner boundary %%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%
-BC=bwboundaries(ctl,'noholes');
-tmp=BC{1};
-innerList(:,:) = tmp(1:end-1,:);
-%innerList = SortCellPixel(ctl);
-%[inX,inY] = ind2sub([dimx,dimy], ctlList(2:1:(end-1)));
-%innerList=cat(2,inX, inY);
-clear tmp BC
-%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% get outer boundary %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%
 se_dil = strel('disk',8);
@@ -37,6 +27,21 @@ tmp=B{1};
 outerList(:,:)=tmp(1:end-1, :);
 clear tmp B
 %outerList = sortPixels(outer_med, dimx, dimy);
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% get inner boundary %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+ctl=bwmorph(ctl,'spur');
+ctl=bwmorph(ctl,'spur');
+
+BC=bwboundaries(ctl,'noholes');
+tmp=BC{1};
+innerList(:,:) = tmp(1:end-1,:);
+%innerList = SortCellPixel(ctl);
+%[inX,inY] = ind2sub([dimx,dimy], ctlList(2:1:(end-1)));
+%innerList=cat(2,inX, inY);
+clear tmp BC
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% build column graph %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%
@@ -50,8 +55,33 @@ for i=1:2:outer_length
     if(i==1)
         idx=knnsearch(innerList,[tx ty]);
         px=innerList(idx,1); py=innerList(idx,2);
-        pre_idx = idx;
         
+        %%%% determine the order of innerList to be traversed %%%
+        if(idx==1)
+            pre_idx=1;
+        else
+            ccx0=outerList(5,1);ccy0=outerList(5,2);
+            cc_idx1 = mod(idx+5,inner_length);
+            if(cc_idx1==0)
+                cc_idx1=inner_length;
+            end
+            cc_idx2 = mod(idx-5,inner_length);
+            if(cc_idx2==0)
+                cc_idx2=inner_length;
+            end
+            
+            ccx1=innerList(cc_idx1,1);ccy1=innerList(cc_idx1,2);
+            ccx2=innerList(cc_idx2,1);ccy2=innerList(cc_idx2,2);
+            
+            if(hypot(ccx0-ccx1,ccy0-ccy1)> hypot(ccx0-ccx2,ccy0-ccy2))
+                innerList(1:1:end,:)=innerList(end:-1:1,:);
+                pre_idx = inner_length - idx +1; 
+            else
+                pre_idx = idx;
+            end
+            
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         colWidth = colWidth+1;
         dx=(tx-px)/(colLength-1);
         dy=(ty-py)/(colLength-1);
@@ -286,8 +316,8 @@ for k=3:1:(len-1)
     px=t(1);py=t(2);
 
     if(tj>t0+1)
-        %disp('jump')
-        %disp([t0,tj])
+        disp('jump')
+        disp([t0,tj])
         if(jumpFlag)
             %disp('multiple jump');
             %keyboard
@@ -330,7 +360,13 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% extract the centerline %%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
-Rs=imfill(R,'holes');
+if(jumpFlag>0)
+    cg=imfill(R,'holes');
+    Rs=imcomplement(R);
+    Rs(~cg)=0;
+else
+    Rs=imfill(R,'holes');
+end
 
 idx=find(R>0);
 [tx,ty]=ind2sub([dimx,dimy],idx);
