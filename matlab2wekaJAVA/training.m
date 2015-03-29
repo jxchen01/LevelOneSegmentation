@@ -1,15 +1,13 @@
-function [myModel, numPixel] = training(opt)
+function [myModel, numPixel] = training(img,opt)
 
-%%%% data information %%%%
-sqNum=opt.sqNum;
-idxBase=opt.idxBase;
-imgType=opt.imgType;
+% input:
+%   -img,  matrix of size M x N x 3 x K.
+%          3 layers: raw, cell, non-cell
+%          K is the number of training images
+%   -opt,  structure of parameters
+
 
 %%%% program parameters %%%%
-trainingFrame=opt.trainingFrame;
-opt_frangi=opt.opt_frangi;
-se_tophat=opt.se_tophat;
-
 myClassifier=opt.myClassifier;
 myParameter=opt.myParameter;
 

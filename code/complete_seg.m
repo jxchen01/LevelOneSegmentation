@@ -1,10 +1,16 @@
-% addpath('../matlab2wekaJAVA/');
-% %javaaddpath('/Applications/weka-3-6-9.app/Contents/Resources/Java/weka.jar')
+addpath('../matlab2wekaJAVA/');
+javaaddpath('/Applications/weka-3-6-9.app/Contents/Resources/Java/weka.jar')
+fpath='Users/JianxuChen/Research/myResearch/Pseudomonas/2015/tracking';
 % javaaddpath('E:/Weka/weka.jar');
-% opt=setParameter_local();
-% 
-% %%%%%%%  model training %%%%%%%%%%
-% [myModel, numPixel] = training(opt);
+opt=setParameter();
+
+%%%%%%%  model training %%%%%%%%%%
+img=[];
+for i=1:1:opt.numTraining
+    I=imread([fpath,'training_',num2str(i),'.tif']);
+    img=cat(4,img,mat2gray(I));
+end
+[myModel, numPixel] = training(opt);
  %disp('finish training');
 %%%%%%%%%%%%%%%%%%%%%%%%%
 img=cell(1,opt.numFrame);
